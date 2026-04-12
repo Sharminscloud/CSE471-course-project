@@ -1,83 +1,24 @@
 const express = require("express");
 const Token = require("../models/Token");
-const Branch = require("../models/Branch");
+const {
+  getBranches,
+  getServices,
+  createToken,
+} = require("../controllers/tokenController");
 
 const router = express.Router();
 
-function getTodayRange() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
-
-  return { start, end };
-}
-
-// Create a token (auto tokenNumber)
-router.post("/", async (req, res) => {
-  try {
-    const { branch } = req.body;
-
-    if (!branch) {
-      return res.status(400).json({ message: "branch is required" });
-    }
-
-    const branchDoc = await Branch.findById(branch);
-
-    if (!branchDoc) {
-      return res.status(404).json({ message: "Branch not found" });
-    }
-
-    if (branchDoc.status === "Inactive") {
-      return res.status(400).json({
-        message: "Branch is inactive. New token requests are blocked.",
-      });
-    }
-
-    if (branchDoc.status === "Maintenance") {
-      return res.status(400).json({
-        message: "Branch is under maintenance. New token requests are blocked.",
-      });
-    }
-
-    const { start, end } = getTodayRange();
-
-    const todayTokenCount = await Token.countDocuments({
-      branch,
-      issuedAt: { $gte: start, $lte: end },
-      status: { $ne: "Cancelled" },
-    });
-
-    if (todayTokenCount >= branchDoc.dailyCapacity) {
-      return res.status(400).json({
-        message: `Daily capacity reached for this branch. Maximum allowed tokens today: ${branchDoc.dailyCapacity}`,
-      });
-    }
-
-    const lastToken = await Token.findOne({ branch }).sort({ tokenNumber: -1 });
-    const nextNumber = lastToken ? lastToken.tokenNumber + 1 : 1;
-
-    const token = await Token.create({
-      branch,
-      tokenNumber: nextNumber,
-      status: "Waiting",
-    });
-
-    res.status(201).json({
-      message: "Token created successfully",
-      token,
-    });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
+// New token feature routes
+router.get("/branches", getBranches);
+router.get("/services", getServices);
+router.post("/", createToken);
 
 // Get all tokens
 router.get("/", async (req, res) => {
   try {
     const tokens = await Token.find()
       .populate("branch", "name address status dailyCapacity activeCounters")
+      .populate("service", "name")
       .sort({ createdAt: -1 });
 
     res.json(tokens);
@@ -93,7 +34,9 @@ router.put("/:id", async (req, res) => {
       req.params.id,
       { status: req.body.status },
       { new: true, runValidators: true },
-    );
+    )
+      .populate("branch", "name")
+      .populate("service", "name");
 
     if (!updated) {
       return res.status(404).json({ message: "Token not found" });
