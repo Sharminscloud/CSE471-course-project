@@ -15,7 +15,7 @@ const SLOT_OPTIONS = [
   "15:00 - 15:30",
   "15:30 - 16:00",
 ];
-
+//
 const getDateOnly = (dateString) => {
   const date = new Date(dateString);
   date.setHours(0, 0, 0, 0);

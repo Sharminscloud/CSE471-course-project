@@ -14,7 +14,7 @@ function timeToMinutes(time) {
 
   return parts[0] * 60 + parts[1];
 }
-
+//
 function getFeasibleCapacity(branch) {
   if (
     !branch.workingHours ||

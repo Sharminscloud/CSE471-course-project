@@ -12,7 +12,7 @@ const router = express.Router();
 router.get("/branches", getBranches);
 router.get("/services", getServices);
 router.post("/", createToken);
-
+//ok
 // Get all tokens
 router.get("/", async (req, res) => {
   try {
