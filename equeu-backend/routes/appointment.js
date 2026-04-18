@@ -1,13 +1,15 @@
 const express = require('express');
 const Appointment = require('../models/Appointment');
+const Branch = require('../models/Branch');
 
 const router = express.Router();
 
-const isSlotAvailable = async (serviceType, date, timeSlot, excludeAppointmentId = null) => {
+const isSlotAvailable = async (serviceType, date, timeSlot, branchId, excludeAppointmentId = null) => {
   const query = {
     serviceType,
     date,
     timeSlot,
+    branch: branchId,
     status: { $in: ['Confirmed', 'Rescheduled'] },
   };
   if (excludeAppointmentId) {
@@ -19,18 +21,30 @@ const isSlotAvailable = async (serviceType, date, timeSlot, excludeAppointmentId
 
 router.post('/', async (req, res) => {
   try {
-    const { serviceType, date, timeSlot, userName, userEmail, userPhone } = req.body;
+    const { serviceType, date, timeSlot, userName, userEmail, userPhone, branch } = req.body;
     if (!serviceType || !date || !timeSlot || !userName || !userEmail || !userPhone) {
       return res.status(400).json({ error: 'All booking fields are required' });
     }
 
+    // Validate branch if provided
+    let branchId = branch;
+    if (branchId) {
+      const branchDoc = await Branch.findById(branchId);
+      if (!branchDoc) {
+        return res.status(404).json({ error: 'Branch not found' });
+      }
+      if (!branchDoc.availableServices.includes(serviceType)) {
+        return res.status(400).json({ error: 'Selected branch does not offer this service' });
+      }
+    }
+
     const appointmentDate = new Date(date);
-    const available = await isSlotAvailable(serviceType, appointmentDate, timeSlot);
+    const available = await isSlotAvailable(serviceType, appointmentDate, timeSlot, branchId);
     if (!available) {
       return res.status(409).json({ error: 'Selected slot is not available' });
     }
 
-    const appointment = await Appointment.create({
+    const appointmentData = {
       serviceType,
       date: appointmentDate,
       timeSlot,
@@ -39,7 +53,13 @@ router.post('/', async (req, res) => {
       userPhone,
       status: 'Confirmed',
       history: [{ status: 'Confirmed', date: appointmentDate, timeSlot }],
-    });
+    };
+
+    if (branchId) {
+      appointmentData.branch = branchId;
+    }
+
+    const appointment = await Appointment.create(appointmentData);
 
     res.status(201).json(appointment);
   } catch (error) {
@@ -50,7 +70,9 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const appointments = await Appointment.find().sort({ date: 1, timeSlot: 1 });
+    const appointments = await Appointment.find()
+      .populate('branch')
+      .sort({ date: 1, timeSlot: 1 });
     res.json(appointments);
   } catch (error) {
     console.error(error);
