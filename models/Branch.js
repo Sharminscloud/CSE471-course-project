@@ -56,10 +56,13 @@ const branchSchema = new mongoose.Schema(
         message: "Status must be Active, Inactive, or Maintenance",
       },
     },
+
+    // ── Added for Shahrin's features ──
+    availableServices: { type: [String], default: [] },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
-
 module.exports = mongoose.model("Branch", branchSchema);
 //ok
 //

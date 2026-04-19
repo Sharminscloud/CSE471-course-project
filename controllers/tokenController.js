@@ -26,7 +26,16 @@ const getServices = async (req, res) => {
 
 const createToken = async (req, res) => {
   try {
-    const { branchId, serviceId, preferredDate, isPriority } = req.body;
+    // [23301695] JAKIA — added citizenName, email, phone for notifications
+    const {
+      branchId,
+      serviceId,
+      preferredDate,
+      isPriority,
+      citizenName,
+      email,
+      phone,
+    } = req.body;
 
     if (!branchId || !serviceId || !preferredDate) {
       return res.status(400).json({
@@ -51,13 +60,8 @@ const createToken = async (req, res) => {
         service: serviceId,
         isPriority: !!isPriority,
       },
-      {
-        $inc: { lastNumber: 1 },
-      },
-      {
-        new: true,
-        upsert: true,
-      },
+      { $inc: { lastNumber: 1 } },
+      { new: true, upsert: true },
     );
 
     const queueNumber = queueDay.lastNumber;
@@ -73,8 +77,12 @@ const createToken = async (req, res) => {
       preferredDate,
       isPriority: !!isPriority,
       queueNumber,
+      // [23301695] JAKIA — her fields for notification system
+      citizenName: citizenName || "",
+      email: email || "",
+      phone: phone || "",
     });
-    //ok
+
     const populatedToken = await Token.findById(token._id)
       .populate("branch", "name")
       .populate("service", "name");
@@ -89,8 +97,4 @@ const createToken = async (req, res) => {
   }
 };
 
-module.exports = {
-  getBranches,
-  getServices,
-  createToken,
-};
+module.exports = { getBranches, getServices, createToken };

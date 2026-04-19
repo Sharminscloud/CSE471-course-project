@@ -1,7 +1,8 @@
 const express = require("express");
 const Appointment = require("../models/Appointment");
-
 const router = express.Router();
+
+// [22301187] SHAHRIN — Slot Availability
 
 const SLOT_OPTIONS = [
   "09:00 - 09:30",
@@ -15,17 +16,17 @@ const SLOT_OPTIONS = [
   "15:00 - 15:30",
   "15:30 - 16:00",
 ];
-//
+
 const getDateOnly = (dateString) => {
   const date = new Date(dateString);
   date.setHours(0, 0, 0, 0);
   return date;
 };
 
+// GET /api/slots/availability?serviceType=X&date=YYYY-MM-DD
 router.get("/availability", async (req, res) => {
   try {
     const { serviceType, date } = req.query;
-
     if (!serviceType || !date) {
       return res
         .status(400)

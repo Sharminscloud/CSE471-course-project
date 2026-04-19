@@ -246,3 +246,15 @@ button:hover {
     font-size: 24px;
   }
 }
+.section-label {
+  background: rgba(30, 41, 59, 0.8);
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 8px;
+  margin: 2rem 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-left: 3px solid #3b82f6;
+}
