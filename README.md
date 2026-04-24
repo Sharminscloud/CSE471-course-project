@@ -1,5 +1,0 @@
-
-
-
-
-Updated project integration documentation
