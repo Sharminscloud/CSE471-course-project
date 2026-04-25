@@ -19,57 +19,57 @@ export function ServiceList({ services, onEdit, onDelete }: ServiceListProps) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'High':
-        return 'text-destructive';
+        return 'text-rose-400';
       case 'Medium':
-        return 'text-chart-4';
+        return 'text-amber-300';
       case 'Low':
-        return 'text-muted-foreground';
+        return 'text-blue-200/80';
       default:
-        return 'text-foreground';
+        return 'text-blue-100';
     }
   };
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
+    <div className="border border-blue-900 rounded-lg overflow-hidden bg-slate-950">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-muted/50 border-b border-border">
+          <thead className="bg-slate-900 border-b border-blue-900">
             <tr>
-              <th className="text-left px-6 py-3 text-sm text-muted-foreground">Service Name</th>
-              <th className="text-left px-6 py-3 text-sm text-muted-foreground">Category</th>
-              <th className="text-left px-6 py-3 text-sm text-muted-foreground">Avg. Time</th>
-              <th className="text-left px-6 py-3 text-sm text-muted-foreground">Fee</th>
-              <th className="text-left px-6 py-3 text-sm text-muted-foreground">Priority</th>
-              <th className="text-left px-6 py-3 text-sm text-muted-foreground">Branches</th>
-              <th className="text-left px-6 py-3 text-sm text-muted-foreground">Status</th>
-              <th className="text-right px-6 py-3 text-sm text-muted-foreground">Actions</th>
+              <th className="text-left px-6 py-3 text-sm text-blue-200">Service Name</th>
+              <th className="text-left px-6 py-3 text-sm text-blue-200">Category</th>
+              <th className="text-left px-6 py-3 text-sm text-blue-200">Avg. Time</th>
+              <th className="text-left px-6 py-3 text-sm text-blue-200">Fee</th>
+              <th className="text-left px-6 py-3 text-sm text-blue-200">Priority</th>
+              <th className="text-left px-6 py-3 text-sm text-blue-200">Branches</th>
+              <th className="text-left px-6 py-3 text-sm text-blue-200">Status</th>
+              <th className="text-right px-6 py-3 text-sm text-blue-200">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-blue-950">
             {services.map((service) => (
-              <tr key={service.id} className="hover:bg-muted/30 transition-colors">
+              <tr key={service.id} className="hover:bg-slate-900 transition-colors">
                 <td className="px-6 py-4">
-                  <p className="text-foreground">{service.name}</p>
+                  <p className="text-blue-100">{service.name}</p>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-secondary text-secondary-foreground text-sm">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-blue-900/50 text-blue-100 text-sm">
                     {service.category}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-foreground">{service.avgProcessingTime} min</td>
-                <td className="px-6 py-4 text-foreground">
+                <td className="px-6 py-4 text-blue-100">{service.avgProcessingTime} min</td>
+                <td className="px-6 py-4 text-blue-100">
                   {service.fee === 0 ? 'Free' : `Rs. ${service.fee.toLocaleString()}`}
                 </td>
                 <td className="px-6 py-4">
                   <span className={getPriorityColor(service.priority)}>{service.priority}</span>
                 </td>
-                <td className="px-6 py-4 text-foreground">{service.branches}</td>
+                <td className="px-6 py-4 text-blue-100">{service.branches}</td>
                 <td className="px-6 py-4">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs ${
                       service.status === 'Active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-emerald-900/40 text-emerald-300'
+                        : 'bg-slate-800 text-slate-300'
                     }`}
                   >
                     {service.status}
@@ -79,13 +79,13 @@ export function ServiceList({ services, onEdit, onDelete }: ServiceListProps) {
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(service)}
-                      className="px-3 py-1.5 text-sm text-primary hover:bg-muted rounded-md transition-colors"
+                      className="px-3 py-1.5 text-sm text-sky-300 hover:bg-blue-950 rounded-md transition-colors"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => onDelete(service.id)}
-                      className="px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                      className="px-3 py-1.5 text-sm text-rose-400 hover:bg-rose-950/40 rounded-md transition-colors"
                     >
                       Delete
                     </button>

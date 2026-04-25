@@ -56,10 +56,10 @@ export function ServiceForm({ service, onSave, onCancel }: ServiceFormProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-background rounded-lg w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-border">
-          <h2>{service ? 'Edit Service' : 'Create New Service'}</h2>
-          <p className="text-sm text-muted-foreground mt-1">
+      <div className="bg-slate-950 border border-blue-900 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col text-white">
+        <div className="px-6 py-4 border-b border-blue-900">
+          <h2 className="text-blue-200">{service ? 'Edit Service' : 'Create New Service'}</h2>
+          <p className="text-sm text-blue-100/80 mt-1">
             {service ? 'Update service details and configuration' : 'Add a new service to the system'}
           </p>
         </div>
@@ -68,24 +68,24 @@ export function ServiceForm({ service, onSave, onCancel }: ServiceFormProps) {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block mb-2 text-foreground">Service Name</label>
+                <label className="block mb-2 text-white">Service Name</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Passport Renewal"
-                  className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-4 py-2.5 bg-slate-900 text-white border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 placeholder:text-blue-100/50"
                 />
               </div>
 
               <div>
-                <label className="block mb-2 text-foreground">Category</label>
+                <label className="block mb-2 text-white">Category</label>
                 <select
                   required
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-4 py-2.5 bg-slate-900 text-white border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
                 >
                   <option value="">Select category</option>
                   <option value="Passport Services">Passport Services</option>
@@ -98,48 +98,48 @@ export function ServiceForm({ service, onSave, onCancel }: ServiceFormProps) {
             </div>
 
             <div>
-              <label className="block mb-2 text-foreground">Description</label>
+              <label className="block mb-2 text-white">Description</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Brief description of the service"
                 rows={3}
-                className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                className="w-full px-4 py-2.5 bg-slate-900 text-white border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none placeholder:text-blue-100/50"
               />
             </div>
 
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <label className="block mb-2 text-foreground">Avg. Processing Time (min)</label>
+                <label className="block mb-2 text-white">Avg. Processing Time (min)</label>
                 <input
                   type="number"
                   required
                   min="1"
                   value={formData.avgProcessingTime}
                   onChange={(e) => setFormData({ ...formData, avgProcessingTime: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-4 py-2.5 bg-slate-900 text-white border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
               </div>
 
               <div>
-                <label className="block mb-2 text-foreground">Service Fee (Rs.)</label>
+                <label className="block mb-2 text-white">Service Fee (Rs.)</label>
                 <input
                   type="number"
                   required
                   min="0"
                   value={formData.fee}
                   onChange={(e) => setFormData({ ...formData, fee: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-4 py-2.5 bg-slate-900 text-white border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
               </div>
 
               <div>
-                <label className="block mb-2 text-foreground">Priority Level</label>
+                <label className="block mb-2 text-white">Priority Level</label>
                 <select
                   required
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'High' | 'Medium' | 'Low' })}
-                  className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full px-4 py-2.5 bg-slate-900 text-white border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
                 >
                   <option value="High">High</option>
                   <option value="Medium">Medium</option>
@@ -149,21 +149,21 @@ export function ServiceForm({ service, onSave, onCancel }: ServiceFormProps) {
             </div>
 
             <div>
-              <label className="block mb-2 text-foreground">Required Documents</label>
+              <label className="block mb-2 text-white">Required Documents</label>
               <input
                 type="text"
                 value={formData.requiredDocuments}
                 onChange={(e) => setFormData({ ...formData, requiredDocuments: e.target.value })}
                 placeholder="e.g., CNIC, Previous Passport, Photos (comma separated)"
-                className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-4 py-2.5 bg-slate-900 text-white border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 placeholder:text-blue-100/50"
               />
-              <p className="text-sm text-muted-foreground mt-1.5">Separate multiple documents with commas</p>
+              <p className="text-sm text-blue-100/70 mt-1.5">Separate multiple documents with commas</p>
             </div>
 
             <div>
-              <label className="block mb-2 text-foreground">Status</label>
+              <label className="block mb-2 text-white">Status</label>
               <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer text-white">
                   <input
                     type="radio"
                     name="status"
@@ -172,9 +172,9 @@ export function ServiceForm({ service, onSave, onCancel }: ServiceFormProps) {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as 'Active' | 'Inactive' })}
                     className="w-4 h-4"
                   />
-                  <span>Active</span>
+                  <span className="text-white">Active</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer text-white">
                   <input
                     type="radio"
                     name="status"
@@ -183,24 +183,24 @@ export function ServiceForm({ service, onSave, onCancel }: ServiceFormProps) {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as 'Active' | 'Inactive' })}
                     className="w-4 h-4"
                   />
-                  <span>Inactive</span>
+                  <span className="text-white">Inactive</span>
                 </label>
               </div>
             </div>
           </div>
         </form>
 
-        <div className="px-6 py-4 border-t border-border flex items-center justify-end gap-3">
+        <div className="px-6 py-4 border-t border-blue-900 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2.5 text-foreground hover:bg-muted rounded-lg transition-colors"
+            className="px-4 py-2.5 text-white hover:bg-blue-950 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            className="px-6 py-2.5 bg-sky-500 text-white rounded-lg hover:bg-sky-400 transition-colors"
           >
             {service ? 'Update Service' : 'Create Service'}
           </button>

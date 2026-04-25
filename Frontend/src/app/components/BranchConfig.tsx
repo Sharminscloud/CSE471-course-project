@@ -63,10 +63,10 @@ export function BranchConfig({ serviceName, availableBranches, assignments, onSa
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-background rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-border">
-          <h2>Branch Configuration</h2>
-          <p className="text-sm text-muted-foreground mt-1">
+      <div className="bg-slate-950 border border-blue-900 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col text-white">
+        <div className="px-6 py-4 border-b border-blue-900">
+          <h2 className="text-blue-200">Branch Configuration</h2>
+          <p className="text-sm text-blue-100/80 mt-1">
             Assign {serviceName} to branches and customize settings
           </p>
         </div>
@@ -81,7 +81,7 @@ export function BranchConfig({ serviceName, availableBranches, assignments, onSa
                 <div
                   key={branch.id}
                   className={`border rounded-lg transition-all ${
-                    isAssigned ? 'border-primary bg-primary/5' : 'border-border'
+                    isAssigned ? 'border-sky-500 bg-blue-950/30' : 'border-blue-900 bg-slate-900'
                   }`}
                 >
                   <div className="p-4">
@@ -91,12 +91,12 @@ export function BranchConfig({ serviceName, availableBranches, assignments, onSa
                           type="checkbox"
                           checked={isAssigned}
                           onChange={() => toggleBranch(branch.id)}
-                          className="mt-1 w-4 h-4 rounded border-border"
+                          className="mt-1 w-4 h-4 rounded border-blue-700 accent-sky-500"
                         />
                         <div className="flex-1">
-                          <h3 className="text-foreground">{branch.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-0.5">{branch.location}</p>
-                          <p className="text-sm text-muted-foreground mt-1">
+                          <h3 className="text-white">{branch.name}</h3>
+                          <p className="text-sm text-blue-100/80 mt-0.5">{branch.location}</p>
+                          <p className="text-sm text-blue-100/80 mt-1">
                             Default capacity: {branch.capacity} slots/hour
                           </p>
                         </div>
@@ -104,9 +104,9 @@ export function BranchConfig({ serviceName, availableBranches, assignments, onSa
                     </div>
 
                     {isAssigned && (
-                      <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 gap-4">
+                      <div className="mt-4 pt-4 border-t border-blue-900 grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm mb-2 text-foreground">
+                          <label className="block text-sm mb-2 text-white">
                             Custom Processing Time (min)
                           </label>
                           <input
@@ -115,11 +115,11 @@ export function BranchConfig({ serviceName, availableBranches, assignments, onSa
                             value={assignment.customProcessingTime || ''}
                             onChange={(e) => updateAssignment(branch.id, 'customProcessingTime', e.target.value ? parseInt(e.target.value) : undefined)}
                             placeholder="Use default"
-                            className="w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+                            className="w-full px-3 py-2 bg-slate-950 border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm text-white placeholder:text-blue-100/50"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm mb-2 text-foreground">
+                          <label className="block text-sm mb-2 text-white">
                             Custom Capacity (slots/hour)
                           </label>
                           <input
@@ -128,7 +128,7 @@ export function BranchConfig({ serviceName, availableBranches, assignments, onSa
                             value={assignment.customCapacity || ''}
                             onChange={(e) => updateAssignment(branch.id, 'customCapacity', e.target.value ? parseInt(e.target.value) : undefined)}
                             placeholder={`Default: ${branch.capacity}`}
-                            className="w-full px-3 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+                            className="w-full px-3 py-2 bg-slate-950 border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm text-white placeholder:text-blue-100/50"
                           />
                         </div>
                       </div>
@@ -140,21 +140,21 @@ export function BranchConfig({ serviceName, availableBranches, assignments, onSa
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-border flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+        <div className="px-6 py-4 border-t border-blue-900 flex items-center justify-between">
+          <p className="text-sm text-blue-100/80">
             {localAssignments.length} {localAssignments.length === 1 ? 'branch' : 'branches'} assigned
           </p>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 text-foreground hover:bg-muted rounded-lg transition-colors"
+              className="px-4 py-2.5 text-white hover:bg-blue-950 rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              className="px-6 py-2.5 bg-sky-500 text-white rounded-lg hover:bg-sky-400 transition-colors"
             >
               Save Configuration
             </button>

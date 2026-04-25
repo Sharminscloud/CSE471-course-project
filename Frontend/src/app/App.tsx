@@ -3,6 +3,8 @@ import { Sidebar } from './components/Sidebar';
 import { ServiceList } from './components/ServiceList';
 import { ServiceForm } from './components/ServiceForm';
 import { BranchConfig } from './components/BranchConfig';
+import { BranchLoadOptimizer } from './components/BranchLoadOptimizer';
+import { HistoricalQueueAnalytics } from './components/HistoricalQueueAnalytics';
 import Pusher from 'pusher-js';
 import {
   serviceAPI,
@@ -38,6 +40,7 @@ export default function App() {
   const [activeView, setActiveView] = useState('services');
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [showBranchConfig, setShowBranchConfig] = useState(false);
+  const [showBranchOptimizer, setShowBranchOptimizer] = useState(false);
   const [editingService, setEditingService] = useState<ServiceView | null>(null);
   const [configuringService, setConfiguringService] = useState<ServiceView | null>(null);
 
@@ -311,267 +314,277 @@ export default function App() {
       : 0;
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+    <div className="flex h-screen bg-slate-950 text-white">
+      <Sidebar
+        activeView={activeView}
+        onViewChange={setActiveView}
+        onBranchClick={() => setShowBranchOptimizer(true)}
+      />
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="border-b border-border bg-background px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1>Service Management</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Create and manage public service offerings
-              </p>
-            </div>
-            <button
-              onClick={handleCreateService}
-              className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              + New Service
-            </button>
-          </div>
-        </header>
-
-        <div className="flex-1 overflow-y-auto px-8 py-6">
-          {/* Stats */}
-          <div className="mb-6 grid grid-cols-4 gap-4">
-            <div className="bg-background border border-border rounded-lg p-5">
-              <p className="text-sm text-muted-foreground">Total Services</p>
-              <p className="text-3xl mt-2">{services.length}</p>
-            </div>
-            <div className="bg-background border border-border rounded-lg p-5">
-              <p className="text-sm text-muted-foreground">Active Services</p>
-              <p className="text-3xl mt-2">{services.filter(s => s.status === 'Active').length}</p>
-            </div>
-            <div className="bg-background border border-border rounded-lg p-5">
-              <p className="text-sm text-muted-foreground">Total Branches</p>
-              <p className="text-3xl mt-2">{availableBranches.length}</p>
-            </div>
-            <div className="bg-background border border-border rounded-lg p-5">
-              <p className="text-sm text-muted-foreground">Avg. Processing Time</p>
-              <p className="text-3xl mt-2">{avgTime} min</p>
-            </div>
-          </div>
-
-          <div className="bg-background rounded-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h3>All Services</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Manage service details, fees, and branch assignments
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="search"
-                  placeholder="Search services..."
-                  className="px-4 py-2 bg-input-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring w-64"
-                />
-              </div>
-            </div>
-
-            {/* Loading / Error / List */}
-            {loading ? (
-              <p className="text-muted-foreground py-8 text-center">Loading services from database…</p>
-            ) : error ? (
-              <div className="py-8 text-center">
-                <p className="text-red-500 mb-3">{error}</p>
+        {activeView === 'analytics' ? (
+          <HistoricalQueueAnalytics services={services} queueTokens={queueTokens} />
+        ) : (
+          <>
+            <header className="border-b border-blue-900 bg-slate-950 px-8 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1>Service Management</h1>
+                  <p className="text-sm text-blue-100/80 mt-1">
+                    Create and manage public service offerings
+                  </p>
+                </div>
                 <button
-                  onClick={fetchServices}
-                  className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors text-sm"
+                  onClick={handleCreateService}
+                  className="px-6 py-2.5 bg-sky-500 text-white rounded-lg hover:bg-sky-400 transition-colors"
                 >
-                  Retry
+                  + New Service
                 </button>
               </div>
-            ) : (
-              <ServiceList
-                services={services.map(s => ({ ...s, id: s._id }))}
-                onEdit={(s: any) => handleEditService({ ...s, _id: s.id ?? s._id })}
-                onDelete={(id: string) => handleDeleteService(id)}
-              />
-            )}
+            </header>
 
-            {/* Branch Assignments */}
-            <div className="mt-6 space-y-4">
-              <h3>Branch Assignments</h3>
-              {services.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No services yet. Create a service to assign it to branches.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {Array.from(new Set(services.map((s) => s.category || 'Uncategorized'))).map((category) => {
-                    const servicesInCategory = services.filter(
-                      (s) => (s.category || 'Uncategorized') === category
-                    );
-
-                    return (
-                      <div key={category} className="border border-border rounded-lg overflow-hidden">
-                        <div className="px-4 py-3 bg-muted/30 border-b border-border">
-                          <h4 className="text-foreground">{category}</h4>
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            {servicesInCategory.length} {servicesInCategory.length === 1 ? 'service' : 'services'}
-                          </p>
-                        </div>
-
-                        <div className="divide-y divide-border">
-                          {servicesInCategory.map((service) => {
-                            const assigned = branchAssignments[service._id] || [];
-                            return (
-                              <div
-                                key={service._id}
-                                className="p-4 flex items-start justify-between gap-4"
-                              >
-                                <div className="min-w-0">
-                                  <p className="text-foreground font-medium truncate">{service.name}</p>
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    Assigned to {assigned.length} {assigned.length === 1 ? 'branch' : 'branches'}
-                                    {assigned.length > 0 ? ` • ${assigned.map((a) => a.branchName).join(', ')}` : ''}
-                                  </p>
-                                </div>
-
-                                <button
-                                  onClick={() => handleConfigureBranches(service)}
-                                  className="shrink-0 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors"
-                                >
-                                  Configure Branches
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+            <div className="flex-1 overflow-y-auto px-8 py-6">
+              {/* Stats */}
+              <div className="mb-6 grid grid-cols-4 gap-4">
+                <div className="bg-slate-900 border border-blue-900 rounded-lg p-5">
+                  <p className="text-sm text-blue-200">Total Services</p>
+                  <p className="text-3xl mt-2">{services.length}</p>
                 </div>
-              )}
-            </div>
-
-            {/* Real-time Queue Updates */}
-            <div className="mt-8 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3>Real-Time Queue Updates</h3>
-                <span
-                  className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs border ${
-                    realtimeStatus === 'connected'
-                      ? 'bg-green-100 text-green-800 border-green-200'
-                      : realtimeStatus === 'connecting'
-                      ? 'bg-amber-100 text-amber-800 border-amber-200'
-                      : 'bg-gray-100 text-gray-700 border-gray-200'
-                  }`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      realtimeStatus === 'connected'
-                        ? 'bg-green-500'
-                        : realtimeStatus === 'connecting'
-                        ? 'bg-amber-500'
-                        : 'bg-gray-400'
-                    }`}
-                  />
-                  Realtime {realtimeStatus}
-                </span>
-              </div>
-
-              <div className="border border-border rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Create token and watch live status/position updates through Pusher.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <select
-                    value={tokenForm.serviceId}
-                    onChange={(e) => setTokenForm((prev) => ({ ...prev, serviceId: e.target.value }))}
-                    className="px-3 py-2 bg-input-background border border-border rounded-lg"
-                  >
-                    <option value="">Select service</option>
-                    {services.map((s) => (
-                      <option key={s._id} value={s._id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={tokenForm.branchId}
-                    onChange={(e) => setTokenForm((prev) => ({ ...prev, branchId: e.target.value }))}
-                    className="px-3 py-2 bg-input-background border border-border rounded-lg"
-                  >
-                    <option value="">Select branch</option>
-                    {availableBranches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="text"
-                    value={tokenForm.citizenName}
-                    onChange={(e) => setTokenForm((prev) => ({ ...prev, citizenName: e.target.value }))}
-                    placeholder="Citizen name (optional)"
-                    className="px-3 py-2 bg-input-background border border-border rounded-lg"
-                  />
-
-                  <button
-                    disabled={creatingToken}
-                    onClick={handleCreateQueueToken}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-60"
-                  >
-                    {creatingToken ? 'Creating...' : 'Create Token'}
-                  </button>
+                <div className="bg-slate-900 border border-blue-900 rounded-lg p-5">
+                  <p className="text-sm text-blue-200">Active Services</p>
+                  <p className="text-3xl mt-2">{services.filter(s => s.status === 'Active').length}</p>
+                </div>
+                <div className="bg-slate-900 border border-blue-900 rounded-lg p-5">
+                  <p className="text-sm text-blue-200">Total Branches</p>
+                  <p className="text-3xl mt-2">{availableBranches.length}</p>
+                </div>
+                <div className="bg-slate-900 border border-blue-900 rounded-lg p-5">
+                  <p className="text-sm text-blue-200">Avg. Processing Time</p>
+                  <p className="text-3xl mt-2">{avgTime} min</p>
                 </div>
               </div>
 
-              <div className="border border-border rounded-lg overflow-hidden">
-                <div className="grid grid-cols-6 gap-2 px-4 py-3 bg-muted/30 border-b border-border text-sm text-muted-foreground">
-                  <span>Token</span>
-                  <span>Service</span>
-                  <span>Branch</span>
-                  <span>Status</span>
-                  <span>Waiting Position</span>
-                  <span className="text-right">Action</span>
-                </div>
-                {queueTokens.length === 0 ? (
-                  <p className="px-4 py-4 text-sm text-muted-foreground">No queue tokens yet.</p>
-                ) : (
-                  <div className="divide-y divide-border">
-                    {queueTokens.map((token) => {
-                      const serviceName =
-                        typeof token.serviceId === 'object' ? token.serviceId.name : token.serviceId;
-                      const branchName =
-                        typeof token.branchId === 'object' ? token.branchId.name : token.branchId;
-
-                      return (
-                        <div key={token._id} className="grid grid-cols-6 gap-2 px-4 py-3 items-center">
-                          <span>{token.tokenNumber}</span>
-                          <span className="truncate">{serviceName}</span>
-                          <span className="truncate">{branchName}</span>
-                          <span>{token.status}</span>
-                          <span>{token.waitingPosition ?? '-'}</span>
-                          <div className="text-right">
-                            <select
-                              value={token.status}
-                              onChange={(e) =>
-                                handleQueueStatusChange(token._id, e.target.value as QueueToken['status'])
-                              }
-                              className="px-2 py-1 bg-input-background border border-border rounded-md text-sm"
-                            >
-                              <option value="Waiting">Waiting</option>
-                              <option value="Serving">Serving</option>
-                              <option value="Completed">Completed</option>
-                              <option value="Skipped">Skipped</option>
-                              <option value="Cancelled">Cancelled</option>
-                            </select>
-                          </div>
-                        </div>
-                      );
-                    })}
+              <div className="bg-slate-950 rounded-lg">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h3>All Services</h3>
+                    <p className="text-sm text-blue-100/80 mt-1">
+                      Manage service details, fees, and branch assignments
+                    </p>
                   </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="search"
+                      placeholder="Search services..."
+                      className="px-4 py-2 bg-slate-900 border border-blue-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 w-64 text-blue-100"
+                    />
+                  </div>
+                </div>
+
+                {/* Loading / Error / List */}
+                {loading ? (
+                  <p className="text-blue-100/80 py-8 text-center">Loading services from database…</p>
+                ) : error ? (
+                  <div className="py-8 text-center">
+                    <p className="text-red-500 mb-3">{error}</p>
+                    <button
+                      onClick={fetchServices}
+                      className="px-4 py-2 border border-blue-900 rounded-lg hover:bg-blue-950 transition-colors text-sm text-blue-100"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : (
+                  <ServiceList
+                    services={services.map(s => ({ ...s, id: s._id }))}
+                    onEdit={(s: any) => handleEditService({ ...s, _id: s.id ?? s._id })}
+                    onDelete={(id: string) => handleDeleteService(id)}
+                  />
                 )}
+
+                {/* Branch Assignments */}
+                <div className="mt-6 space-y-4">
+                  <h3 className="text-white">Branch Assignments</h3>
+                  {services.length === 0 ? (
+                    <p className="text-sm text-blue-100/80">
+                      No services yet. Create a service to assign it to branches.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {Array.from(new Set(services.map((s) => s.category || 'Uncategorized'))).map((category) => {
+                        const servicesInCategory = services.filter(
+                          (s) => (s.category || 'Uncategorized') === category
+                        );
+
+                        return (
+                          <div key={category} className="border border-blue-900 rounded-lg overflow-hidden bg-slate-950">
+                            <div className="px-4 py-3 bg-slate-900 border-b border-blue-900">
+                              <h4 className="text-white">{category}</h4>
+                              <p className="text-sm text-blue-100/80 mt-0.5">
+                                {servicesInCategory.length} {servicesInCategory.length === 1 ? 'service' : 'services'}
+                              </p>
+                            </div>
+
+                            <div className="divide-y divide-border">
+                              {servicesInCategory.map((service) => {
+                                const assigned = branchAssignments[service._id] || [];
+                                return (
+                                  <div
+                                    key={service._id}
+                                    className="p-4 flex items-start justify-between gap-4"
+                                  >
+                                    <div className="min-w-0">
+                                      <p className="text-blue-100 font-medium truncate">{service.name}</p>
+                                      <p className="text-sm text-blue-100/80 mt-1">
+                                        Assigned to {assigned.length} {assigned.length === 1 ? 'branch' : 'branches'}
+                                        {assigned.length > 0 ? ` • ${assigned.map((a) => a.branchName).join(', ')}` : ''}
+                                      </p>
+                                    </div>
+
+                                    <button
+                                      onClick={() => handleConfigureBranches(service)}
+                                      className="shrink-0 px-4 py-2 border border-blue-900 rounded-lg hover:bg-blue-950 transition-colors text-blue-100"
+                                    >
+                                      Configure Branches
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Real-time Queue Updates */}
+                <div className="mt-8 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3>Real-Time Queue Updates</h3>
+                    <span
+                      className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs border ${
+                        realtimeStatus === 'connected'
+                          ? 'bg-green-100 text-green-800 border-green-200'
+                          : realtimeStatus === 'connecting'
+                          ? 'bg-amber-100 text-amber-800 border-amber-200'
+                          : 'bg-gray-100 text-gray-700 border-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          realtimeStatus === 'connected'
+                            ? 'bg-green-500'
+                            : realtimeStatus === 'connecting'
+                            ? 'bg-amber-500'
+                            : 'bg-gray-400'
+                        }`}
+                      />
+                      Realtime {realtimeStatus}
+                    </span>
+                  </div>
+
+                  <div className="border border-blue-900 rounded-lg p-4 bg-slate-900">
+                    <p className="text-sm text-blue-100/80 mb-3">
+                      Create token and watch live status/position updates through Pusher.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <select
+                        value={tokenForm.serviceId}
+                        onChange={(e) => setTokenForm((prev) => ({ ...prev, serviceId: e.target.value }))}
+                        className="px-3 py-2 bg-slate-950 border border-blue-900 rounded-lg text-blue-100"
+                      >
+                        <option value="">Select service</option>
+                        {services.map((s) => (
+                          <option key={s._id} value={s._id}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={tokenForm.branchId}
+                        onChange={(e) => setTokenForm((prev) => ({ ...prev, branchId: e.target.value }))}
+                        className="px-3 py-2 bg-slate-950 border border-blue-900 rounded-lg text-blue-100"
+                      >
+                        <option value="">Select branch</option>
+                        {availableBranches.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <input
+                        type="text"
+                        value={tokenForm.citizenName}
+                        onChange={(e) => setTokenForm((prev) => ({ ...prev, citizenName: e.target.value }))}
+                        placeholder="Citizen name (optional)"
+                        className="px-3 py-2 bg-slate-950 border border-blue-900 rounded-lg text-blue-100"
+                      />
+
+                      <button
+                        disabled={creatingToken}
+                        onClick={handleCreateQueueToken}
+                        className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-400 disabled:opacity-60"
+                      >
+                        {creatingToken ? 'Creating...' : 'Create Token'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="border border-blue-900 rounded-lg overflow-hidden bg-slate-950">
+                    <div className="grid grid-cols-6 gap-2 px-4 py-3 bg-slate-900 border-b border-blue-900 text-sm text-blue-200">
+                      <span>Token</span>
+                      <span>Service</span>
+                      <span>Branch</span>
+                      <span>Status</span>
+                      <span>Waiting Position</span>
+                      <span className="text-right">Action</span>
+                    </div>
+                    {queueTokens.length === 0 ? (
+                      <p className="px-4 py-4 text-sm text-blue-100/80">No queue tokens yet.</p>
+                    ) : (
+                      <div className="divide-y divide-border">
+                        {queueTokens.map((token) => {
+                          const serviceName =
+                            typeof token.serviceId === 'object' ? token.serviceId.name : token.serviceId;
+                          const branchName =
+                            typeof token.branchId === 'object' ? token.branchId.name : token.branchId;
+
+                          return (
+                            <div key={token._id} className="grid grid-cols-6 gap-2 px-4 py-3 items-center">
+                              <span>{token.tokenNumber}</span>
+                              <span className="truncate">{serviceName}</span>
+                              <span className="truncate">{branchName}</span>
+                              <span>{token.status}</span>
+                              <span>{token.waitingPosition ?? '-'}</span>
+                              <div className="text-right">
+                                <select
+                                  value={token.status}
+                                  onChange={(e) =>
+                                    handleQueueStatusChange(token._id, e.target.value as QueueToken['status'])
+                                  }
+                                  className="px-2 py-1 bg-slate-900 border border-blue-900 rounded-md text-sm text-blue-100"
+                                >
+                                  <option value="Waiting">Waiting</option>
+                                  <option value="Serving">Serving</option>
+                                  <option value="Completed">Completed</option>
+                                  <option value="Skipped">Skipped</option>
+                                  <option value="Cancelled">Cancelled</option>
+                                </select>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </main>
 
       {showServiceForm && (
@@ -595,6 +608,16 @@ export default function App() {
             setShowBranchConfig(false);
             setConfiguringService(null);
           }}
+        />
+      )}
+
+      {showBranchOptimizer && (
+        <BranchLoadOptimizer
+          services={services}
+          branches={availableBranches}
+          branchAssignments={branchAssignments}
+          queueTokens={queueTokens}
+          onClose={() => setShowBranchOptimizer(false)}
         />
       )}
     </div>
