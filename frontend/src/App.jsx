@@ -49,7 +49,62 @@ function App() {
   const [waitingMessage, setWaitingMessage]   = useState("");
   const [holidayDate, setHolidayDate]         = useState("");
   const [holidayResult, setHolidayResult]     = useState(null);
+  // [21301163] SHARMIN — Feature 3
+    const DEFAULT_AVG_PROCESSING_TIME = 15;
 
+  const totalBranches = branches.length;
+  const activeBranches = branches.filter((b) => b.status === "Active").length;
+  const inactiveBranches = branches.filter((b) => b.status === "Inactive").length;
+  const maintenanceBranches = branches.filter(
+    (b) => b.status === "Maintenance"
+  ).length;
+
+  function timeToMinutes(time) {
+    if (!time) return null;
+
+    const parts = time.split(":").map(Number);
+
+    if (parts.length !== 2) return null;
+    if (Number.isNaN(parts[0]) || Number.isNaN(parts[1])) return null;
+
+    return parts[0] * 60 + parts[1];
+  }
+
+  function getFeasibleCapacity(branch) {
+    const openTime = branch.workingHours?.open;
+    const closeTime = branch.workingHours?.close;
+
+    const openMinutes = timeToMinutes(openTime);
+    const closeMinutes = timeToMinutes(closeTime);
+
+    if (openMinutes === null || closeMinutes === null) {
+      return null;
+    }
+
+    const workingMinutes = closeMinutes - openMinutes;
+
+    if (workingMinutes <= 0) {
+      return null;
+    }
+
+    return Math.floor(
+      (workingMinutes / DEFAULT_AVG_PROCESSING_TIME) * branch.activeCounters
+    );
+  }
+
+  function getCapacityWarning(branch) {
+    const feasibleCapacity = getFeasibleCapacity(branch);
+
+    if (feasibleCapacity === null) {
+      return "Capacity could not be calculated. Please check working hours.";
+    }
+
+    if (branch.dailyCapacity > feasibleCapacity) {
+      return `Warning: Daily capacity ${branch.dailyCapacity} is higher than feasible capacity ${feasibleCapacity}.`;
+    }
+
+    return "";
+  }
   // ============================================================
   // [22201001] SUNEHRA — Service Config + Analytics State
   // ============================================================
@@ -489,6 +544,11 @@ const deleteToken = async (id) => {
                   <p><strong>Hours:</strong> {branch.workingHours?.open || "—"} – {branch.workingHours?.close || "—"}</p>
                   <p><strong>Daily Capacity:</strong> {branch.dailyCapacity || "—"}</p>
                   <p><strong>Active Counters:</strong> {branch.activeCounters || "—"}</p>
+                  {getCapacityWarning(branch) && (
+                    <div className="capacity-warning">
+                      {getCapacityWarning(branch)}
+                    </div>
+                  )}
                   <div className="buttons">
                     <button type="button" onClick={() => changeStatus(branch._id, "Active")}>Active</button>
                     <button type="button" onClick={() => changeStatus(branch._id, "Inactive")}>Inactive</button>
@@ -500,7 +560,31 @@ const deleteToken = async (id) => {
             </div>
           )}
         </div>
+          <div className="card">
+            <h2>Branch Dashboard Summary</h2>
 
+            <div className="summary-grid">
+              <div className="summary-box">
+                <h3>{totalBranches}</h3>
+                <p>Total Branches</p>
+              </div>
+
+              <div className="summary-box">
+                <h3>{activeBranches}</h3>
+                <p>Active Branches</p>
+              </div>
+
+              <div className="summary-box">
+                <h3>{inactiveBranches}</h3>
+                <p>Inactive Branches</p>
+              </div>
+
+              <div className="summary-box">
+                <h3>{maintenanceBranches}</h3>
+                <p>Maintenance Branches</p>
+              </div>
+            </div>
+          </div>
 
         {/* ════════════════════════════════════════════════════
             [22201001] SUNEHRA — Feature 1: Service Configuration
