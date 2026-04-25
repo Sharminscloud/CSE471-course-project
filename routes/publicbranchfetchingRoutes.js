@@ -1,5 +1,5 @@
 const express = require('express');
-const Branch = require('../models/publicbranchfetching');
+const PublicBranchFetching = require('../models/PublicBranchFetching');
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
       query.availableServices = serviceType;
     }
     
-    const branches = await Branch.find(query).sort({ name: 1 });
+    const branches = await PublicBranchFetching.find(query).sort({ name: 1 });
     res.json(branches);
   } catch (error) {
     console.error('Branch fetch error:', error);
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 // GET /api/branches/:id - Fetch specific branch
 router.get('/:id', async (req, res) => {
   try {
-    const branch = await Branch.findById(req.params.id);
+    const branch = await PublicBranchFetching.findById(req.params.id);
     if (!branch) {
       return res.status(404).json({ error: 'Branch not found' });
     }
