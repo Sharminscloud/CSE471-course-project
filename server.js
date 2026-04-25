@@ -16,6 +16,7 @@ const analyticsRoutes = require("./routes/analyticsRoutes");
 const tokenRoutes = require("./routes/tokenRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const { startReminderScheduler } = require("./utils/reminderScheduler");
+const activityRoutes = require("./routes/activityRoutes");
 
 // [22301187] SHAHRIN
 const appointmentRoutes = require("./routes/appointmentRoutes");
@@ -47,6 +48,7 @@ app.use("/api/analytics", analyticsRoutes);
 // [23301695] JAKIA
 app.use("/api/tokens", tokenRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/activity-history", activityRoutes);
 
 // [22301187] SHAHRIN
 app.use("/api/appointments", appointmentRoutes);

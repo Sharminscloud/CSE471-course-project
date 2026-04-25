@@ -15,6 +15,22 @@ const WAITING_API      = "http://localhost:1163/api/waiting";
 const SERVICE_API      = "http://localhost:1163/api/services";
 const ANALYTICS_API    = "http://localhost:1163/api/analytics";
 const NOTIFICATION_API = "http://localhost:1163/api/notifications";
+const ADVANCED_SEARCH_API = "http://localhost:1163/api/slots/search"
+const ACTIVITY_API = "http://localhost:1163/api/activity-history";
+
+// [23301695] JAKIA — Slot options for Advanced Search
+const SLOT_OPTIONS = [
+  "09:00 - 09:30",
+  "09:30 - 10:00",
+  "10:00 - 10:30",
+  "10:30 - 11:00",
+  "11:00 - 11:30",
+  "11:30 - 12:00",
+  "14:00 - 14:30",
+  "14:30 - 15:00",
+  "15:00 - 15:30",
+  "15:30 - 16:00",
+];
 
 // [22301187] SHAHRIN — Her service options
 const SERVICE_OPTIONS = [
@@ -66,7 +82,7 @@ function App() {
   const [compareResult, setCompareResult]       = useState(null);
 
   // ============================================================
-  // [23301695] JAKIA — Token + Notification State
+  // [23301695] JAKIA — Token + Notification State 
   // ============================================================
   const [tokenBranches, setTokenBranches] = useState([]);
   const [services, setServices]           = useState([]);
@@ -81,6 +97,33 @@ function App() {
   const [tokenPhone, setTokenPhone]       = useState("");
   const [notifications, setNotifications] = useState([]);
   const [notifMessage, setNotifMessage]   = useState("");
+
+  // 23302695.Jakia - Advance Search and Filtering State
+
+  const [advancedBranchId, setAdvancedBranchId] = useState("");
+  const [advancedServiceType, setAdvancedServiceType] = useState("");
+  const [advancedDate, setAdvancedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [advancedTimeSlot, setAdvancedTimeSlot] = useState("");
+  const [advancedMaxQueue, setAdvancedMaxQueue] = useState("");
+  const [advancedResults, setAdvancedResults] = useState([]);
+  const [advancedMessage, setAdvancedMessage] = useState("");
+
+  // [23301695] JAKIA — Citizen Activity History State
+
+const [activityEmail, setActivityEmail] = useState("");
+const [activityServiceType, setActivityServiceType] = useState("");
+const [activityBranch, setActivityBranch] = useState("");
+const [activityStatus, setActivityStatus] = useState("");
+const [activityFromDate, setActivityFromDate] = useState("");
+const [activityToDate, setActivityToDate] = useState("");
+const [activitySearch, setActivitySearch] = useState("");
+const [activityHistory, setActivityHistory] = useState([]);
+const [completedActivities, setCompletedActivities] = useState([]);
+const [pendingActivities, setPendingActivities] = useState([]);
+const [usagePatterns, setUsagePatterns] = useState(null);
+const [activityPage, setActivityPage] = useState(1);
+const [activityTotalPages, setActivityTotalPages] = useState(1);
+const [activityMessage, setActivityMessage] = useState("");
 
   // ============================================================
   // [22301187] SHAHRIN — Appointment + Slot State
@@ -237,7 +280,8 @@ function App() {
 
 
   // ============================================================
-  // [23301695] JAKIA — Token + Notification Functions
+  // [23301695] JAKIA — Token + Notification Functions 
+  // + Advance Search and Filtering + Activity History
   // ============================================================
   const getTokenBranches = async () => {
     try {
@@ -293,15 +337,108 @@ function App() {
     }
   };
 
-const deleteToken = async (id) => {
-  try {
-    await axios.delete(`${TOKEN_API}/${id}`);
-    setTokenMessage("Token deleted");
-    getTokens();
-  } catch {
-    setTokenMessage("Failed to delete token");
-  }
+  const deleteToken = async (id) => {
+    try {
+      await axios.delete(`${TOKEN_API}/${id}`);
+      setTokenMessage("Token deleted");
+      getTokens();
+    } catch {
+      setTokenMessage("Failed to delete token");
+    }
+  };
+
+  const searchAvailableSlots = async () => {
+    try {
+      const params = new URLSearchParams();
+
+      if (advancedBranchId) params.append("branchId", advancedBranchId);
+      if (advancedServiceType) params.append("serviceType", advancedServiceType);
+      if (advancedDate) params.append("date", advancedDate);
+      if (advancedTimeSlot) params.append("timeSlot", advancedTimeSlot);
+      if (advancedMaxQueue) params.append("maxQueueLength", advancedMaxQueue);
+
+      const res = await axios.get(`${ADVANCED_SEARCH_API}?${params.toString()}`);
+
+      setAdvancedResults(res.data.results || []);
+      
+      if ((res.data.results || []).length === 0) {
+        setAdvancedMessage("No available slots found for the selected filters");
+      } else {
+        setAdvancedMessage("");
+      }
+    } catch {
+      setAdvancedMessage("Failed to search available slots");
+      setAdvancedResults([]);
+    }
+  };
+
+  const clearAdvancedSearch = () => {
+    setAdvancedBranchId("");
+    setAdvancedServiceType("");
+    setAdvancedDate(new Date().toISOString().split("T")[0]);
+    setAdvancedTimeSlot("");
+    setAdvancedMaxQueue("");
+    setAdvancedResults([]);
+    setAdvancedMessage("");
+  };
+
+  const getCitizenActivityHistory = async (selectedPage = 1) => {
+    if (!activityEmail) {
+      setActivityMessage("Please enter citizen email to view activity history");
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+
+      params.append("email", activityEmail.trim());
+
+      if (activityServiceType) params.append("serviceType", activityServiceType);
+      if (activityBranch) params.append("branch", activityBranch);
+      if (activityStatus) params.append("status", activityStatus);
+      if (activityFromDate) params.append("fromDate", activityFromDate);
+      if (activityToDate) params.append("toDate", activityToDate);
+      if (activitySearch) params.append("search", activitySearch);
+
+      params.append("page", selectedPage);
+      params.append("limit", 5);
+
+      const res = await axios.get(`${ACTIVITY_API}?${params.toString()}`);
+
+      setActivityHistory(res.data.history || []);
+      setCompletedActivities(res.data.completedServices || []);
+      setPendingActivities(res.data.pendingOrCancelledServices || []);
+      setUsagePatterns(res.data.usagePatterns || null);
+      setActivityPage(res.data.currentPage || 1);
+      setActivityTotalPages(res.data.totalPages || 1);
+
+      if ((res.data.history || []).length === 0) {
+        setActivityMessage("No activity history found");
+      } else {
+        setActivityMessage("");
+      }
+    } catch (err) {
+      setActivityMessage(err.response?.data?.message || "Failed to load activity history");
+      setActivityHistory([]);
+    }
+  };
+
+  const clearActivityHistoryFilters = () => {
+  setActivityServiceType("");
+  setActivityBranch("");
+  setActivityStatus("");
+  setActivityFromDate("");
+  setActivityToDate("");
+  setActivitySearch("");
+  setActivityHistory([]);
+  setCompletedActivities([]);
+  setPendingActivities([]);
+  setUsagePatterns(null);
+  setActivityPage(1);
+  setActivityTotalPages(1);
+  setActivityMessage("");
 };
+
   // ============================================================
   // [22301187] SHAHRIN — Appointment + Slot Functions
   // ============================================================
@@ -839,8 +976,231 @@ const deleteToken = async (id) => {
             </div>
           )}
         </div>
+        
 
+        {/* ════════════════════════════════════════════════════
+           [23301695] JAKIA — Feature 3: Advanced Search & Filtering
+           ════════════════════════════════════════════════════ */}
+        <div className="section-label">23301695 · Jakia — Advanced Search & Filtering</div>
 
+        <div className="card">
+          <h2>Find Available Slots</h2>
+
+          <div className="form">
+            <select value={advancedBranchId} onChange={(e) => setAdvancedBranchId(e.target.value)}>
+              <option value="">All Branches</option>
+              {branches.map((b) => (
+                <option key={b._id} value={b._id}>{b.name}</option>
+              ))}
+            </select>
+
+            <select value={advancedServiceType} onChange={(e) => setAdvancedServiceType(e.target.value)}>
+              <option value="">All Services</option>
+              {SERVICE_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+               ))}
+            </select>
+
+            <input
+              type="date"
+              value={advancedDate}
+              onChange={(e) => setAdvancedDate(e.target.value)}
+            />
+
+            <select value={advancedTimeSlot} onChange={(e) => setAdvancedTimeSlot(e.target.value)}>
+              <option value="">Any Time Slot</option>
+              {SLOT_OPTIONS.map((slot) => (
+                <option key={slot} value={slot}>{slot}</option>
+              ))}
+            </select>
+
+            <input
+              type="number"
+              placeholder="Max Queue Length"
+              value={advancedMaxQueue}
+              onChange={(e) => setAdvancedMaxQueue(e.target.value)}
+            />
+
+            <button type="button" onClick={ searchAvailableSlots}>
+              Search Slots
+            </button>
+
+            <button type="button" className="delete-btn" onClick={clearAdvancedSearch}>
+              Clear
+            </button>
+          </div>
+
+          {advancedMessage && (
+            <div className="message" style={{ marginTop: "1rem" }}>
+              {advancedMessage}
+            </div>
+          )}
+
+          {advancedResults.length > 0 && (
+            <>
+              <div className="branch-list" style={{ marginTop: "1rem" }}>
+                {advancedResults.map((item) => (
+                  <div className="branch-card" key={item.branchId}>
+                    <div className="branch-top">
+                      <h3>{item.branchName}</h3>
+                      <span className="status-badge active">
+                        Queue: {item.currentQueueLength}
+                      </span>
+                    </div>
+
+                    <p><strong>Address:</strong> {item.address}</p>
+                    <p><strong>Service:</strong> {item.serviceType}</p>
+                    <p><strong>Date:</strong> {item.date}</p>
+                    <p>
+                       <strong>Available Slots:</strong>{" "}
+                       {item.availableSlots && item.availableSlots.length > 0
+                         ? item.availableSlots.join(", ")
+                         : "No slots"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        
+        {/* ════════════════════════════════════════════════════
+            [23301695] JAKIA — Feature 4:Citizen Activity History
+            ════════════════════════════════════════════════════ */}
+        <div className="section-label">23301695 · Jakia — Citizen Activity History</div>
+
+        <div className="card">
+          <h2>Citizen Activity History</h2>
+
+          <div className="form">
+            <input
+              type="email"
+              placeholder="Citizen Email"
+              value={activityEmail}
+              onChange={(e) => setActivityEmail(e.target.value)}
+            />
+
+            <select
+              value={activityServiceType}
+              onChange={(e) => setActivityServiceType(e.target.value)}
+           >
+             <option value="">All Services</option>
+             {SERVICE_OPTIONS.map((s) => (
+               <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            <select
+              value={activityBranch}
+              onChange={(e) => setActivityBranch(e.target.value)}
+            >
+              <option value="">All Branches</option>
+              {branches.map((b) => (
+                <option key={b._id} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={activityStatus}
+              onChange={(e) => setActivityStatus(e.target.value)}
+            >
+              <option value="">All Status</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Rescheduled">Rescheduled</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Waiting">Waiting</option>
+              <option value="Completed">Completed</option>
+            </select>
+
+            <div>
+              <label>From Date</label>
+              <input
+                type="date"
+                value={activityFromDate}
+                onChange={(e) => setActivityFromDate(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label>To Date</label>
+              <input
+                type="date"
+                value={activityToDate}
+                onChange={(e) => setActivityToDate(e.target.value)}
+              />
+            </div>
+
+            <button type="button" onClick={() => getCitizenActivityHistory(1)}>
+              Load History
+            </button>
+
+            <button type="button" className="delete-btn" onClick={clearActivityHistoryFilters}>
+              Clear
+            </button>
+          </div>
+
+          {activityMessage && (
+            <div className="message" style={{ marginTop: "1rem" }}>
+              {activityMessage}
+            </div>
+          )}
+
+          {activityHistory.length > 0 && (
+            <div style={{ marginTop: "1rem" }}>
+              <h3>Activity History</h3>
+
+              <div className="branch-list">
+                {activityHistory.map((item) => (
+                  <div className="branch-card" key={`${item.type}-${item.recordId}`}>
+          
+                    <p><strong>Branch:</strong> {item.branchName}</p>
+                    <p><strong>Service:</strong> {item.serviceName}</p>
+                    <p>
+                      <strong>Date:</strong>{" "}
+                      {new Date(item.date).toLocaleDateString("en-GB")}
+                    </p>
+                    <p><strong>Status:</strong> {item.status}</p>
+
+                    {item.timeSlot && (
+                      <p><strong>Time Slot:</strong> {item.timeSlot}</p>
+                    )}
+
+                    {item.tokenNumber && (
+                      <p><strong>Token Number:</strong> {item.tokenNumber}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+            {activityHistory.length > 0 && (
+              <div className="buttons" style={{ marginTop: "1rem", justifyContent: "center" }}>
+                <button
+                  type="button"
+                  disabled={activityPage <= 1}
+                  onClick={() => getCitizenActivityHistory(activityPage - 1)}
+                >
+                  Previous
+                </button>
+
+                <button type="button" disabled>
+                  Page {activityPage} of {activityTotalPages}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={activityPage >= activityTotalPages}
+                  onClick={() => getCitizenActivityHistory(activityPage + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        
         {/* ════════════════════════════════════════════════════
             [23301695] JAKIA — Feature 2: Queue Alert + Notification Log
             ════════════════════════════════════════════════════ */}
