@@ -1,5 +1,5 @@
 const Branch = require("../models/Branch");
-const Service = require("../models/Service");
+const Service = require("../models/service");
 const Token = require("../models/Token");
 const QueueDay = require("../models/QueueDay");
 const { formatTokenNumber } = require("../utils/tokenGenerator");
