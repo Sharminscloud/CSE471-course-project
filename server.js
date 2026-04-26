@@ -16,6 +16,7 @@ const slotRoutes = require("./routes/slotRoutes");
 const queueLoadRoutes = require("./routes/queueLoadRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const queueRoutes = require("./routes/queueRoutes");
 
 const { startReminderScheduler } = require("./utils/reminderScheduler");
 
@@ -30,7 +31,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("EQueue backend is running");
 });
-
+app.use("/api/queue", queueRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/branches", branchRoutes);
 app.use("/api/waiting", waitingRoutes);
