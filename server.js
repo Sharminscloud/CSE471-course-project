@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const connectDB = require("./config/db");
-
+const activityRoutes = require("./routes/activityRoutes");
 const branchRoutes = require("./routes/branchRoutes");
 const waitingRoutes = require("./routes/waitingRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -31,6 +31,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("EQueue backend is running");
 });
+app.use("/api/activity", activityRoutes);
 app.use("/api/queue", queueRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/branches", branchRoutes);
