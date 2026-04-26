@@ -13,7 +13,6 @@ const slotRoutes = require("./routes/slotRoutes");
 const queueLoadRoutes = require("./routes/queueLoadRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-
 dotenv.config();
 connectDB();
 
