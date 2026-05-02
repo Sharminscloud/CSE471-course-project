@@ -23,14 +23,34 @@ const TIME_OPTIONS = [
 ];
 
 const TIME_SLOT_OPTIONS = [
-  "09:00-10:00",
-  "10:00-11:00",
-  "11:00-12:00",
-  "12:00-13:00",
-  "13:00-14:00",
-  "14:00-15:00",
-  "15:00-16:00",
-  "16:00-17:00",
+  "09:00 - 09:30",
+  "09:30 - 10:00",
+  "10:00 - 10:30",
+  "10:30 - 11:00",
+  "11:00 - 11:30",
+  "11:30 - 12:00",
+  "12:00 - 12:30",
+  "12:30 - 13:00",
+  "13:00 - 13:30",
+  "13:30 - 14:00",
+  "14:00 - 14:30",
+  "14:30 - 15:00",
+  "15:00 - 15:30",
+  "15:30 - 16:00",
+  "16:00 - 16:30",
+  "16:30 - 17:00",
+];
+
+const SERVICE_CATEGORY_OPTIONS = [
+  "Passport",
+  "NID",
+  "Health",
+  "Birth Certificate",
+  "Licensing",
+  "Utility",
+  "Tax",
+  "General Inquiry",
+  "Other",
 ];
 
 const api = axios.create({
@@ -56,6 +76,14 @@ function isStrongPassword(password) {
 
 function isAdminUser(user) {
   return user?.role?.toLowerCase() === "admin";
+}
+
+function normalizeList(responseData) {
+  if (Array.isArray(responseData)) return responseData;
+  if (Array.isArray(responseData?.data)) return responseData.data;
+  if (Array.isArray(responseData?.items)) return responseData.items;
+  if (Array.isArray(responseData?.results)) return responseData.results;
+  return [];
 }
 
 function displayNotificationType(type) {
@@ -84,6 +112,40 @@ function getNotificationPhone(notification) {
 
 function getNotificationError(notification) {
   return notification.errorMessage || notification.error || "None";
+}
+
+function getFallbackCoordinates(address) {
+  const value = String(address || "").toLowerCase();
+
+  if (
+    value.includes("dhaka passport") ||
+    value.includes("agargaon") ||
+    value.includes("dhaka")
+  ) {
+    return {
+      latitude: 23.7772,
+      longitude: 90.3742,
+      label: "Dhaka fallback coordinates used",
+    };
+  }
+
+  if (value.includes("gulshan")) {
+    return {
+      latitude: 23.7806,
+      longitude: 90.4193,
+      label: "Gulshan fallback coordinates used",
+    };
+  }
+
+  if (value.includes("mirpur")) {
+    return {
+      latitude: 23.8069,
+      longitude: 90.3687,
+      label: "Mirpur fallback coordinates used",
+    };
+  }
+
+  return null;
 }
 
 export default function App() {
@@ -205,6 +267,7 @@ export default function App() {
 
   const [slotSearchForm, setSlotSearchForm] = useState({
     branchId: "",
+    serviceCategory: "",
     serviceType: "",
     date: today(),
     timeSlot: "",
@@ -299,6 +362,14 @@ export default function App() {
   );
   const recentReports = reports.slice(0, visibleReportCount);
 
+  const slotSearchServices = useMemo(() => {
+    if (!slotSearchForm.serviceCategory) return services;
+
+    return services.filter((service) => {
+      return service.category === slotSearchForm.serviceCategory;
+    });
+  }, [services, slotSearchForm.serviceCategory]);
+
   useEffect(() => {
     if (user) {
       loadAll();
@@ -337,12 +408,12 @@ export default function App() {
         api.get("/api/reports"),
       ]);
 
-      setBranches(branchRes.data);
-      setServices(serviceRes.data);
-      setTokens(tokenRes.data);
-      setAppointments(appointmentRes.data);
-      setNotifications(notificationRes.data);
-      setReports(reportRes.data);
+      setBranches(normalizeList(branchRes.data));
+      setServices(normalizeList(serviceRes.data));
+      setTokens(normalizeList(tokenRes.data));
+      setAppointments(normalizeList(appointmentRes.data));
+      setNotifications(normalizeList(notificationRes.data));
+      setReports(normalizeList(reportRes.data));
     } catch (error) {
       setMessage(showError(error));
     }
@@ -405,12 +476,24 @@ export default function App() {
 
   function getCoordinatesFromAddress(address) {
     return new Promise((resolve, reject) => {
+      const fallback = getFallbackCoordinates(address);
+
       if (!googleMapsKey) {
+        if (fallback) {
+          resolve(fallback);
+          return;
+        }
+
         reject(new Error("Google Maps API key is missing in frontend/.env"));
         return;
       }
 
       if (!isGoogleLoaded || !window.google?.maps) {
+        if (fallback) {
+          resolve(fallback);
+          return;
+        }
+
         reject(new Error("Google Maps is still loading. Try again in a few seconds."));
         return;
       }
@@ -427,7 +510,10 @@ export default function App() {
           resolve({
             latitude: location.lat(),
             longitude: location.lng(),
+            label: "Google detected coordinates",
           });
+        } else if (fallback) {
+          resolve(fallback);
         } else {
           reject(new Error("Could not detect coordinates from this address."));
         }
@@ -452,7 +538,7 @@ export default function App() {
         longitude: String(coords.longitude),
       }));
 
-      setCoordinateStatus("Latitude and longitude detected successfully.");
+      setCoordinateStatus(coords.label || "Latitude and longitude detected successfully.");
     } catch (error) {
       setCoordinateStatus(error.message);
     }
@@ -1800,13 +1886,19 @@ export default function App() {
                     }
                   />
 
-                  <input
-                    placeholder="Category"
+                  <select
                     value={serviceForm.category}
                     onChange={(e) =>
                       setServiceForm({ ...serviceForm, category: e.target.value })
                     }
-                  />
+                  >
+                    <option value="">Select category</option>
+                    {SERVICE_CATEGORY_OPTIONS.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
 
                   <input
                     placeholder="Average processing time in minutes"
@@ -2271,6 +2363,24 @@ export default function App() {
                   </select>
 
                   <select
+                    value={slotSearchForm.serviceCategory}
+                    onChange={(e) =>
+                      setSlotSearchForm({
+                        ...slotSearchForm,
+                        serviceCategory: e.target.value,
+                        serviceType: "",
+                      })
+                    }
+                  >
+                    <option value="">All service categories</option>
+                    {SERVICE_CATEGORY_OPTIONS.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
                     value={slotSearchForm.serviceType}
                     onChange={(e) =>
                       setSlotSearchForm({
@@ -2280,7 +2390,7 @@ export default function App() {
                     }
                   >
                     <option value="">Select service type</option>
-                    {services.map((service) => (
+                    {slotSearchServices.map((service) => (
                       <option key={service._id} value={service.serviceName}>
                         {service.serviceName}
                       </option>
