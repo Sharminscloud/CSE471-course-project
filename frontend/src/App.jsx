@@ -1396,9 +1396,10 @@ export default function App() {
       <div className="auth-page">
         <div className="auth-card">
           <div className="auth-brand">
+          <div className="logo-container">
             <img src={logo} alt="EQueue logo" className="auth-logo" />
+          </div>
             <div>
-              <p>Smart public service queue system</p>
             </div>
           </div>
 
