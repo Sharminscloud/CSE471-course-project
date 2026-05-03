@@ -220,7 +220,7 @@ export default function App() {
     branchId: "",
     serviceId: "",
     preferredDate: today(),
-    timeSlot: "09:00-10:00",
+    timeSlot: "09:00 - 09:30",
     name: "",
     email: "",
     phone: "",
@@ -279,7 +279,7 @@ export default function App() {
   const [rescheduleForm, setRescheduleForm] = useState({
     appointmentId: "",
     preferredDate: today(),
-    timeSlot: "10:00-11:00",
+    timeSlot: "10:00 - 10:30",
   });
 
   const [reportForm, setReportForm] = useState({
@@ -918,20 +918,26 @@ export default function App() {
     try {
       const query = new URLSearchParams(slotSearchForm).toString();
       const res = await api.get(`/api/slots/search?${query}`);
+      const slots = normalizeList(res.data);
 
-      setSlotResults(res.data);
+      setSlotResults(slots);
 
       setResult({
         title: "Slot Search Completed",
         message:
-          Array.isArray(res.data) && res.data.length > 0
-            ? `${res.data.length} branch result found.`
+          slots.length > 0
+            ? `${slots.length} branch result found.`
             : "No available slot found.",
       });
 
-      setMessage("Slot search completed");
+      setMessage("");
     } catch (error) {
-      setMessage(showError(error));
+      setSlotResults([]);
+      setResult({
+        title: "Slot Search Failed",
+        message: showError(error),
+      });
+      setMessage("");
     }
   }
 
@@ -1061,6 +1067,26 @@ export default function App() {
           Hide
         </button>
       </section>
+    );
+  }
+
+  function renderInlineResultPanel(allowedTitles) {
+    if (!result || !allowedTitles.includes(result.title)) return null;
+
+    return (
+      <div className="inline-result-panel">
+        <section className="result-card inline-result-card">
+          <div>
+            <span>Action Result</span>
+            <h2>{result.title}</h2>
+            <p>{result.message}</p>
+          </div>
+
+          <button className="soft-btn" type="button" onClick={() => setResult(null)}>
+            Hide
+          </button>
+        </section>
+      </div>
     );
   }
 
@@ -2438,6 +2464,11 @@ export default function App() {
                   </button>
                 </form>
 
+                {renderInlineResultPanel([
+                  "Slot Search Completed",
+                  "Slot Search Failed",
+                ])}
+
                 {slotResults && slotResults.length > 0 && (
                   <div className="inline-result-panel">
                     <div className="section-head compact-head">
@@ -2624,7 +2655,6 @@ export default function App() {
               </div>
             </section>
 
-            {renderResultPanel()}
           </>
         )}
 
